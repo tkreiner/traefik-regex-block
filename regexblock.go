@@ -146,7 +146,7 @@ func (p *RegexBlock) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // isWhitelisted checks if the IP address is whitelisted.
 func (p *RegexBlock) isWhitelisted(ip string) bool {
-        mylog.Debug("Checking if IP %s is in whitelist")
+        mylog.Debug(fmt.Sprintf("Checking if IP %s is in whitelist",ip))
 	addr := net.ParseIP(ip)
 	if addr == nil {
 		mylog.Debug(fmt.Sprintf("Could not parse request IP %s",ip))
@@ -155,10 +155,10 @@ func (p *RegexBlock) isWhitelisted(ip string) bool {
 
 	for _, ipNet := range p.whitelist {
 		if ipNet.Contains(addr) {
-			mylog.Debug("IP %s is in whitelist")
+			mylog.Debug(fmt.Sprintf("IP %s is in whitelist",ip))
 			return true
 		}
 	}
-	mylog.Debug("IP %s is not in whitelist")
+	mylog.Debug(fmt.Sprintf("IP %s is not in whitelist",ip))
 	return false
 }
