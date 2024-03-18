@@ -1,0 +1,15 @@
+displayName: Regex Block
+type: middleware
+iconPath: .assets/icon.png
+
+import: github.com/tkreiner/traefik-regex-block
+
+summary: 'Block IPs when URLs match a list of regexes.'
+
+testData:
+    blockDurationMinutes: 5
+    regexPatterns:
+        - \/\.env
+        - \/cgi-bin
+    whitelist:
+        - 192.168.0.0/16
