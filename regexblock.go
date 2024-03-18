@@ -8,14 +8,15 @@ import (
 	"regexp"
 	"sync"
 	"time"
-	"log/slog"
         "fmt"
-        "os"
 
-	"github.com/tkreiner/traefik-regex-block/logger"
+	"github.com/zerodha/logf"
 )
 
-var mylog = logger.NewCustomLogger("traefik-regex-block", "TBD", slog.NewTextHandler(os.Stdout, nil))
+var mylog = logf.New(logf.Opts{
+                Level:                logf.DebugLevel,
+                TimestampFormat:      time.RFC3339Nano,
+        })
 
 // Config defines the configuration options for the plugin.
 type Config struct {
@@ -46,7 +47,11 @@ type RegexBlock struct {
 
 // New creates a new instance of the RegexBlock.
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	mylog = logger.NewCustomLogger("traefik-regex-block", name, slog.NewTextHandler(os.Stdout, nil))
+	mylog = logf.New(logf.Opts{
+                Level:                logf.DebugLevel,
+                TimestampFormat:      time.RFC3339Nano,
+                DefaultFields:        []any{"plugin", "traefik-regex-block", "pluginName", name},
+        })
 
         mylog.Info("RegexBlock plugin is starting.")
 
