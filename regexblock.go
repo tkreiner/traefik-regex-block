@@ -24,6 +24,7 @@ type Config struct {
 	BlockDurationMinutes int      `json:"blockDurationMinutes,omitempty"`
 	Whitelist            []string `json:"whitelist,omitempty"`
 	EnableDebug          bool     `json:"enableDebug,omitempty"`
+	AdminToken           string   `json:"adminToken,omitempty"`
 }
 
 // CreateConfig creates a default configuration for the plugin.
@@ -31,6 +32,7 @@ func CreateConfig() *Config {
 	return &Config{
 		BlockDurationMinutes: 60, // Default block duration: 1 hour
 		EnableDebug: false,
+		AdminToken: "",
 	}
 }
 
@@ -42,6 +44,7 @@ type RegexBlock struct {
 	blockDuration     time.Duration
 	whitelist         []*net.IPNet
 	blockedIPs        map[string]time.Time
+	adminToken        string
 	mutex             sync.Mutex
 }
 
@@ -100,11 +103,27 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		blockDuration:     blockDuration,
 		whitelist:         whitelist,
 		blockedIPs:        make(map[string]time.Time),
+		adminToken:        config.AdminToken,
 	}, nil
 }
 
 // ServeHTTP intercepts the request and blocks it if it matches any of the configured regex patterns.
 func (p *RegexBlock) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	token := req.Header.Get("X-Traefik-Regex-Block-Token")
+
+	if token != "" {
+		mylog.Debug(fmt.Sprintf("X-Traefik-Regex-Block-Token header provided with a value of %s.",token))
+		if p.adminToken != "" && token == p.adminToken {
+			if req.Method == http.MethodPost {
+				//p.AdminRemoveIP(rw, req)
+				return
+			} else {
+				p.AdminListIP(rw, req)
+				return
+			}
+		}
+	}
+
 	ip, _, _ := net.SplitHostPort(req.RemoteAddr)
         mylog.Debug(fmt.Sprintf("Testing IP %s.",ip))
 
@@ -142,6 +161,22 @@ func (p *RegexBlock) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// Allow the request to pass through
 	p.next.ServeHTTP(rw, req)
+}
+
+func (p *RegexBlock) AdminListIP(rw http.ResponseWriter, req *http.Request) {
+	// Start building HTML
+	html := "<html><body><h1>Welcome to the admin page!</h1><ul>"
+
+	// Iterate over the array and generate HTML list items
+	for ip, blockTime := range p.blockedIPs {
+		html += "<li>" + ip + " - " + blockTime.String() + "</li>"
+	}
+
+	// Close HTML tags
+	html += "</ul></body></html>"
+
+	// Write HTML response
+	rw.Write([]byte(html))
 }
 
 // isWhitelisted checks if the IP address is whitelisted.
