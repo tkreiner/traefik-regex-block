@@ -1,14 +1,14 @@
 package traefik_regex_block
 
 import (
-	"strings"
-	"time"
 	"fmt"
 	"github.com/zerodha/logf"
+	"strings"
+	"time"
 )
 
 type pluginLogger struct {
-	logger	*logf.Logger
+	logger *logf.Logger
 }
 
 func newPluginLogger(logLevel string, pluginName string) *pluginLogger {
